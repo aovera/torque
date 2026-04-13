@@ -79,3 +79,8 @@ Torque currently relies on Tor Client Authentication and the computational hardn
 Important Warning
 
 Help page or usage instructions is deliberately not added to discourage full use until project reach a mature state. But if you still insist to use, you are free to discover them in source code.
+
+
+
+
+#USE TOR CLIENT AUTHORIZATION
