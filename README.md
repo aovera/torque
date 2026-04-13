@@ -1,42 +1,80 @@
-# Torque
+Torque
 
-**Torque** is an asynchronous, end-to-end encrypted (E2E), and post-quantum cryptography-supported terminal-based P2P messaging application written in Rust.
+Torque is a terminal-based, peer-to-peer (P2P) messaging application written in Rust. It utilizes an asynchronous architecture to provide end-to-end encrypted (E2E) communication with integrated support for Post-Quantum Cryptography (PQC).
 
-Unlike traditional messaging applications, Torque does not rely on a centralized server. It keeps your local database (SQLCipher) and identity in a fully encrypted local vault, ensuring maximum privacy and security.
+DISCLOSURE & WARNING: This project is a Proof-of-Concept (PoC) developed in a high-intensity sprint. It has not undergone a formal security audit. Do not use Torque for sensitive communications where life or liberty depends on its security until the roadmap milestones (specifically PQC signatures and OOB verification) are completed.
 
-## ✨ Key Features
 
-- **Post-Quantum Ready (Hybrid KEM):** Utilizes traditional **X25519** (Elliptic Curve Cryptography) alongside quantum-resistant **Kyber768** algorithms for robust key exchange.
-- **End-to-End Encryption (E2E):** All network traffic is encrypted using **AES-256-GCM**. Network packets are securely serialized with `bincode`.
-- **Fully Encrypted Local Storage:**
-  - Your Private Keys are stored in a local Vault encrypted with **AES-256-GCM**, utilizing a 32-byte key derived via **Argon2**.
-  - Your chat history, contacts, and application settings are kept in an encrypted SQLite database powered by **SQLCipher**.
-- **Asynchronous Network Architecture:** Built on top of **Tokio**, Torque provides non-blocking, high-concurrency I/O operations, ensuring minimum latency and high fault tolerance in message transmission.
 
----
+Philosophy and Architecture
 
-## 🔐 Cryptographic Architecture
+Torque is designed for high-privacy environments where "Network Silence" is a feature, not a bug. It rejects the social-media-centric model of "User Discovery."
 
-Torque's security model is designed to meet the highest modern cryptographic standards:
+No Discovery (Privacy by Isolation): There is no central directory or DHT. You must exchange .onion addresses through a secure, out-of-band channel.
 
-1. **Identity Generation:** X25519 and Kyber768 key pairs are generated during the initial setup.
-2. **Identity Protection:** The user's master password is mathematically hashed into a 32-byte key via **Argon2**, and the private keys are encrypted on disk using **AES-256-GCM**.
-3. **P2P Handshake:** When clients interact, ephemeral keys are generated and mutually verified to establish a secure, symmetric Session Key.
-4. **Message Transmission:** Messages are encrypted using these single-use session keys with AES-256-GCM and transmitted over TCP sockets.
+Tor-Native: All traffic is routed through the Tor network. This masks metadata and provides a baseline layer of anonymity via Onion services.
 
----
+Local Vault: Identity keys are stored in a local vault encrypted with AES-256-GCM, utilizing a key derived via Argon2. Chat history is secured in an encrypted SQLite database via SQLCipher.
 
-## 🛠️ Build and Installation
 
-### Prerequisites
-- [Rust and Cargo](https://rustup.rs/) (Latest stable version recommended)
-- A C compiler and necessary cryptography dependencies for SQLCipher and Argon2 (e.g., `build-essential`, `pkg-config`, `libssl-dev` on Linux).
+Cryptographic Specification
 
-### Compiling from Source
+The current implementation is specifically hardened against Harvest Now, Decrypt Later (HNDL) attacks by utilizing a hybrid key encapsulation mechanism.
 
-Clone the repository and build the project in release mode:
+1. Hybrid Key Exchange (KEM)
 
-```bash
-git clone [https://github.com/aovera/torque.git](https://github.com/aovera/torque.git)
+To protect against both classical and quantum adversaries, Torque combines:
+
+    X25519 (Elliptic Curve Diffie-Hellman)
+
+    Kyber768 (Lattice-based KEM)
+
+The session key is derived using HKDF-SHA256:
+Ksession​=HKDF(Salt=None,IKM=Ex25519​∥EKyber​∥Sx2519​∥SKyber​)
+
+
+2. Message Encryption
+
+Once a session is established, messages are encrypted using AES-256-GCM with unique nonces.
+
+Roadmap & Security Hardening
+
+As an early-stage project, the following features are prioritized to transform the PoC into a robust security tool:
+
+    [ ] Post-Quantum Signatures (ML-DSA / Dilithium): Integrating Dilithium3 to sign handshake packets, preventing future quantum adversaries from performing MitM attacks by spoofing Onion identities.
+
+    [ ] Out-of-Band (OOB) Fingerprinting: Implementing a terminal UI to display cryptographic fingerprints (SHA256 of all public keys) for manual verification.
+
+    [ ] Network Sanitization: - Implementing Length Sanitization to prevent memory exhaustion (DoS) attacks.
+
+        Implementing Network Padding to ensure all packets are of uniform size, mitigating traffic analysis.
+
+    [ ] Reliable Messaging: Completing the retry logic for pending messages using exponential backoff.
+
+    [ ] Terminal UI (TUI): Transitioning to a professional interface using ratatui.
+
+🚀 Getting Started
+Prerequisites
+
+    Rust (Latest Stable)
+
+    Tor Daemon (Configured on 127.0.0.1:9050)
+
+    Development headers for SQLCipher and OpenSSL (libssl-dev, build-essential on Linux).
+
+Build from Source
+Bash
+
+git clone https://github.com/aovera/torque
 cd torque
 cargo build --release
+
+
+Security Posture
+
+Torque currently relies on Tor Client Authentication and the computational hardness of the Birthday Attack on Tor v3 addresses for its primary identity verification. While this provides significant protection today, it is theoretically vulnerable to active quantum adversaries. Users should treat all "unverified" fingerprints with skepticism.
+
+
+Important Warning
+
+Help page or usage instructions is deliberately not added to discourage full use until project reach a mature state. But if you still insist to use, you are free to discover them in source code.
