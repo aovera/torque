@@ -63,11 +63,12 @@ Prerequisites
     Development headers for SQLCipher and OpenSSL (libssl-dev, build-essential on Linux).
 
 Build from Source
-Bash
 
-git clone https://github.com/aovera/torque
-cd torque
-cargo build --release
+```git clone https://github.com/aovera/torque```
+
+```cd torque```
+
+```cargo build --release```
 
 
 Security Posture
